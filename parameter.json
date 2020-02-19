@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "VPCCIDRblock",
+    "ParameterValue": "172.31.0.0/16"
+  }, 
+  {
+    "ParameterKey": "PublicSubnet1CIDR",
+    "ParameterValue": "172.31.0.0/20"
+  }, 
+  {
+    "ParameterKey": "PublicSubnet2CIDR",
+    "ParameterValue": "172.31.16.0/20"
+  }, 
+  {
+    "ParameterKey": "PublicSubnet3CIDR",
+    "ParameterValue": "172.31.32.0/20"
+  }, 
+  {
+    "ParameterKey": "VPCName",
+    "ParameterValue": "Parameterized VPC"
+  }
+]
