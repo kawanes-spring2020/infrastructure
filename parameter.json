@@ -17,6 +17,6 @@
   }, 
   {
     "ParameterKey": "VPCName",
-    "ParameterValue": "Parameterized VPC"
+    "ParameterValue": "VPC-Shubham-Parameterized"
   }
 ]
