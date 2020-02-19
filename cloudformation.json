@@ -53,8 +53,8 @@
 		   "Properties" : 
 			{
 			      "CidrBlock" : {"Ref": "VPCCIDRblock"},
-			      "EnableDnsSupport" : "false",
-			      "EnableDnsHostnames" : "false",
+			      "EnableDnsSupport" : "true",
+			      "EnableDnsHostnames" : "true",
 			      "InstanceTenancy" : "default",
 			      "Tags" : [ {"Key" : "Name", "Value" : {"Ref": "VPCName"}} ]
 			}
