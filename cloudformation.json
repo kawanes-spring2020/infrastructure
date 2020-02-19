@@ -1,0 +1,154 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Shubham - Cloud Formation template for creating VPC, Subnets, Internet Getway and Route tables",
+	"Parameters": 
+	{
+	    "VPCCIDRblock":
+            {
+		"Type": "String",
+		"Default": "172.31.0.0/16",
+		"Description": "Enter CIDR range for creating a vpc."
+		
+	    },
+	    "PublicSubnet1CIDR":
+            {
+		"Type": "String",
+		"Default": "172.31.0.0/20",
+		"Description": "Enter CIDR range for subnet 1."
+		
+	    },
+	    "PublicSubnet2CIDR":
+            {
+		"Type": "String",
+		"Default": "172.31.16.0/20",
+		"Description": "Enter CIDR range for subnet 2."
+		
+	    },
+	    "PublicSubnet3CIDR":
+            {
+		"Type": "String",
+		"Default": "172.31.32.0/20",
+		"Description": "Enter CIDR range for subnet 3."
+		
+	    },
+	    "VPCName":
+            {
+		"Type": "String",
+		"Default": "VPCName Passed as parameter",
+		"Description": "Enter name for creating a vpc."
+	    }
+	},
+	"Resources": 
+	{
+		"VPC" : 
+		{
+		   "Type" : "AWS::EC2::VPC",
+		   "Properties" : 
+			{
+			      "CidrBlock" : {"Ref": "VPCCIDRblock"},
+			      "EnableDnsSupport" : "false",
+			      "EnableDnsHostnames" : "false",
+			      "InstanceTenancy" : "default",
+			      "Tags" : [ {"Key" : "Shubham-VPC", "Value" : {"Ref": "VPCName"}} ]
+			}
+		},
+		"InternetGateway" : 
+		{
+		      "Type" : "AWS::EC2::InternetGateway",
+		      "Properties" : 
+			{
+			        "Tags" : [ {"Key" : "Shubham-IG", "Value" : "CloudFormation IG"}]
+		        }
+   		},
+		"VPCGatewayAttachment" : 
+		{
+		   "Type" : "AWS::EC2::VPCGatewayAttachment",
+		   "Properties" : 
+		   {
+		      "VpcId" : { "Ref" : "VPC" },
+		      "InternetGatewayId" : { "Ref" : "InternetGateway" }
+		   }
+		},
+		"Subnet1" : 
+		{
+		   "Type" : "AWS::EC2::Subnet",
+		   "Properties" : 
+		   {
+		      "VpcId" : { "Ref" : "VPC" },
+		      "CidrBlock" : { "Ref" : "PublicSubnet1CIDR" },
+		      "MapPublicIpOnLaunch" : "true",	
+		      "Tags" : [ { "Key" : "Subnet-1", "Value" : "useast-1a" } ]
+   		   }
+		},
+		"Subnet2" : 
+		{
+		   "Type" : "AWS::EC2::Subnet",
+		   "Properties" : 
+		   {
+		      "VpcId" : { "Ref" : "VPC" },
+		      "CidrBlock" : { "Ref" : "PublicSubnet2CIDR" },
+		      "MapPublicIpOnLaunch" : "true",	
+		      "Tags" : [ { "Key" : "Subnet-2", "Value" : "useast-1a" } ]
+   		   }
+		},
+		"Subnet3" : 
+		{
+		   "Type" : "AWS::EC2::Subnet",
+		   "Properties" : 
+		   {
+		      "VpcId" : { "Ref" : "VPC" },
+		      "CidrBlock" : { "Ref" : "PublicSubnet3CIDR" },
+		      "MapPublicIpOnLaunch" : "true",	
+		      "Tags" : [ { "Key" : "Subnet-3", "Value" : "useast-1c" } ]
+   		   }
+		},
+		"RouteTable" : 
+		{
+		   "Type" : "AWS::EC2::RouteTable",
+		   "Properties" : 
+		   {
+		      "VpcId" : { "Ref" : "VPC" },
+		      "Tags" : [ { "Key" : "RouteTable", "Value" : "ShubhamRoute Table" } ]
+		   }
+		},
+		"InternetRoute" : 
+		{
+		   "Type" : "AWS::EC2::Route",
+		   "DependsOn" : "VPCGatewayAttachment",
+		   "Properties" : 
+		   {
+		      "RouteTableId" : { "Ref" : "RouteTable" },
+		      "DestinationCidrBlock" : "0.0.0.0/0",
+		      "GatewayId" : { "Ref" : "InternetGateway" }
+		   }
+		},
+		"Subnet1RouteTableAssociation" : 
+		{
+		   "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+		   "Properties" : 
+		   {
+		      "SubnetId" : { "Ref" : "Subnet1" },
+		      "RouteTableId" : { "Ref" : "RouteTable" }
+		   }
+		},
+		"Subnet2RouteTableAssociation" : 
+		{
+		   "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+		   "Properties" : 
+		   {
+		      "SubnetId" : { "Ref" : "Subnet2" },
+		      "RouteTableId" : { "Ref" : "RouteTable" }
+		   }
+		},
+		"Subnet3RouteTableAssociation" : 
+		{
+		   "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+		   "Properties" : 
+		   {
+		      "SubnetId" : { "Ref" : "Subnet3" },
+		      "RouteTableId" : { "Ref" : "RouteTable" }
+		   }
+		}
+	}
+	
+}
