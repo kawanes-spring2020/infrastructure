@@ -71,6 +71,18 @@
 			"Type": "String",
 			"Default": "5",
 			"Description": "Enter Size RDS."
+		},
+		"access":
+		{
+			"Type": "String",
+			"Default": "5",
+			"Description": "Enter ."
+		},
+		"secret":
+		{
+			"Type": "String",
+			"Default": "5",
+			"Description": "Enter Size RDS."
 		}
 
 	},
@@ -426,6 +438,16 @@
 								"echo amazonProperties.region=",
 								{
 									"Ref": "AWSRegion"
+								},
+								" >> /home/ubuntu/S3Bucket.properties\n",
+								"echo amazonProperties.accessKey=",
+								{
+									"Ref": "access"
+								},
+								" >> /home/ubuntu/S3Bucket.properties\n",
+								"echo amazonProperties.secretKey=",
+								{
+									"Ref": "secret"
 								},
 								" >> /home/ubuntu/S3Bucket.properties\n"
 							]
