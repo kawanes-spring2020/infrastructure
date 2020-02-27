@@ -18,5 +18,30 @@
   {
     "ParameterKey": "VPCName",
     "ParameterValue": "VPC-Shubham-Parameterized"
+  },
+  {
+    "ParameterKey": "AWSRegion",
+    "ParameterValue": "US-EAST-2"
+  },
+  {
+    "ParameterKey": "DBUsername",
+    "ParameterValue": "postgres"
+  },
+  {
+    "ParameterKey": "DBPassword",
+    "ParameterValue": "postgres"
+  },
+  {
+    "ParameterKey": "AMIName",
+    "ParameterValue": "ami-03c4fd953388edf66"
+  },
+  {
+    "ParameterKey": "InstanceSize",
+    "ParameterValue": "20"
+  },
+  {
+    "ParameterKey": "RDSInstanceSize",
+    "ParameterValue": "5"
   }
+  
 ]
