@@ -42,6 +42,14 @@
   {
     "ParameterKey": "RDSInstanceSize",
     "ParameterValue": "5"
+  },
+  {
+    "ParameterKey": "access",
+    "ParameterValue": "5"
+  },
+  {
+    "ParameterKey": "secret",
+    "ParameterValue": "5"
   }
   
 ]
