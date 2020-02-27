@@ -1,0 +1,444 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Shubham - Cloud Formation template for Assignment 6",
+	"Parameters": 
+	{
+		"VPCCIDRblock":
+		{
+			"Type": "String",
+			"Default": "172.31.0.0/16",
+			"Description": "Enter CIDR range for creating a vpc."
+
+		},
+		"PublicSubnet1CIDR":
+		{
+			"Type": "String",
+			"Default": "172.31.0.0/20",
+			"Description": "Enter CIDR range for subnet 1."
+
+		},
+		"PublicSubnet2CIDR":
+		{
+			"Type": "String",
+			"Default": "172.31.16.0/20",
+			"Description": "Enter CIDR range for subnet 2."
+
+		},
+		"PublicSubnet3CIDR":
+		{
+			"Type": "String",
+			"Default": "172.31.32.0/20",
+			"Description": "Enter CIDR range for subnet 3."
+
+		},
+		"VPCName":
+		{
+			"Type": "String",
+			"Default": "VPCName Passed as parameter",
+			"Description": "Enter name for creating a vpc."
+		},
+		"AWSRegion":
+		{
+			"Type": "String",
+			"Default": "us-east-1",
+			"Description": "Enter AWS region for creating a vpc."
+		},
+		"DBUsername":
+		{
+			"Type": "String",
+			"Default": "postgres",
+			"Description": "Enter username for RDS."
+		},
+		"DBPassword":
+		{
+			"Type": "String",
+			"Default": "postgres",
+			"Description": "Enter password for RDS."
+		},
+		"AMIName":
+		{
+			"Type": "String",
+			"Description": "Enter AMI Name."
+		},
+		"InstanceSize":
+		{
+			"Type": "String",
+			"Default": "8",
+			"Description": "Enter Size Ec2."
+		},
+		"RDSInstanceSize":
+		{
+			"Type": "String",
+			"Default": "5",
+			"Description": "Enter Size RDS."
+		}
+
+	},
+	"Resources": 
+	{
+		"VPC" : 
+		{
+			"Type" : "AWS::EC2::VPC",
+			"Properties" : 
+			{
+				"CidrBlock" : {"Ref": "VPCCIDRblock"},
+				"EnableDnsSupport" : "true",
+				"EnableDnsHostnames" : "true",
+				"InstanceTenancy" : "default",
+				"Tags" : [ {"Key" : "Name", "Value" : {"Ref": "VPCName"}} ]
+			}
+		},
+		"InternetGateway" : 
+		{
+			"Type" : "AWS::EC2::InternetGateway",
+			"Properties" : 
+			{
+				"Tags" : [ {"Key" : "Name", "Value" : "CloudFormation IG"}]
+			}
+		},
+		"VPCGatewayAttachment" : 
+		{
+			"Type" : "AWS::EC2::VPCGatewayAttachment",
+			"Properties" : 
+			{
+				"VpcId" : { "Ref" : "VPC" },
+				"InternetGatewayId" : { "Ref" : "InternetGateway" }
+			}
+		},
+		"Subnet1" : 
+		{
+			"Type" : "AWS::EC2::Subnet",
+			"Properties" : 
+			{
+				"VpcId" : { "Ref" : "VPC" },
+				"CidrBlock" : { "Ref" : "PublicSubnet1CIDR" },
+				"AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+				"MapPublicIpOnLaunch" : "true",	
+				"Tags" : [ { "Key" : "Name", "Value" : "AZ-1" } ]
+			}
+		},
+		"Subnet2" : 
+		{
+			"Type" : "AWS::EC2::Subnet",
+			"Properties" : 
+			{
+				"VpcId" : { "Ref" : "VPC" },
+				"CidrBlock" : { "Ref" : "PublicSubnet2CIDR" },
+				"AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+				"MapPublicIpOnLaunch" : "true",	
+				"Tags" : [ { "Key" : "Name", "Value" : "AZ-2" } ]
+			}
+		},
+		"Subnet3" : 
+		{
+			"Type" : "AWS::EC2::Subnet",
+			"Properties" : 
+			{
+				"VpcId" : { "Ref" : "VPC" },
+				"CidrBlock" : { "Ref" : "PublicSubnet3CIDR" },
+				"AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+				"MapPublicIpOnLaunch" : "true",	
+				"Tags" : [ { "Key" : "Name", "Value" : "Az-3" } ]
+			}
+		},
+		"RouteTable" : 
+		{
+			"Type" : "AWS::EC2::RouteTable",
+			"Properties" : 
+			{
+				"VpcId" : { "Ref" : "VPC" },
+				"Tags" : [ { "Key" : "Name", "Value" : "Route Table VPC" } ]
+			}
+		},
+		"InternetRoute" : 
+		{
+			"Type" : "AWS::EC2::Route",
+			"DependsOn" : "VPCGatewayAttachment",
+			"Properties" : 
+			{
+				"RouteTableId" : { "Ref" : "RouteTable" },
+				"DestinationCidrBlock" : "0.0.0.0/0",
+				"GatewayId" : { "Ref" : "InternetGateway" }
+			}
+		},
+		"Subnet1RouteTableAssociation" : 
+		{
+			"Type" : "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties" : 
+			{
+				"SubnetId" : { "Ref" : "Subnet1" },
+				"RouteTableId" : { "Ref" : "RouteTable" }
+			}
+		},
+		"Subnet2RouteTableAssociation" : 
+		{
+			"Type" : "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties" : 
+			{
+				"SubnetId" : { "Ref" : "Subnet2" },
+				"RouteTableId" : { "Ref" : "RouteTable" }
+			}
+		},
+		"Subnet3RouteTableAssociation" : 
+		{
+			"Type" : "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties" : 
+			{
+				"SubnetId" : { "Ref" : "Subnet3" },
+				"RouteTableId" : { "Ref" : "RouteTable" }
+			}
+		},
+		"WebSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"VpcId" : { "Ref" : "VPC" },
+				"GroupDescription": "Web Application Security Group",
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"CidrIp": "0.0.0.0/0",
+						"FromPort": 22,
+						"ToPort": 22
+					},
+					{
+						"IpProtocol": "tcp",
+						"CidrIp": "0.0.0.0/0",
+						"FromPort": 80,
+						"ToPort": 80
+					},
+					{
+						"IpProtocol": "tcp",
+						"CidrIp": "0.0.0.0/0",
+						"FromPort": 443,
+						"ToPort": 443
+					},
+					{
+						"IpProtocol": "tcp",
+						"CidrIp": "0.0.0.0/0",
+						"FromPort": 8080,
+						"ToPort": 8080
+					}
+				]
+			}
+		},
+		"DBSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"VpcId" : { "Ref" : "VPC" },
+				"GroupDescription": "Database Server Security Group"
+				
+			}
+		},
+		"InboundRule": {
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"Properties":{
+				"IpProtocol": "tcp",
+				"FromPort": 5432,
+				"ToPort": 5432,
+				"SourceSecurityGroupId": {
+					"Fn::GetAtt": [
+						"WebSecurityGroup",
+						"GroupId"
+					]
+				},
+				"GroupId": {
+					"Fn::GetAtt": [
+						"DBSecurityGroup",
+						"GroupId"
+					]
+				}
+			}
+		},
+
+		"IAMRole": {
+			"Type": "AWS::IAM::Role",
+			"DependsOn": "S3Bucket",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ec2.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"RoleName": "EC2-CSYE6225",
+				"Policies": [
+					{
+						"PolicyName" : "WebAppS3",
+						"PolicyDocument" : {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"s3:PutObject",
+										"s3:ListBucket",
+										"s3:GetObject",
+										"s3:CreateBucket"
+									],
+									"Resource": {"Fn::Join":["",["arn:aws:s3:::",{"Ref":"S3Bucket"},"/*"]]}
+								}
+							]
+						}
+
+					}
+				]
+			}
+		},
+
+		"S3Bucket": {
+			"Type" : "AWS::S3::Bucket",
+			"Properties" : {
+				"BucketEncryption": {
+					"ServerSideEncryptionConfiguration": [
+						{
+							"ServerSideEncryptionByDefault": {
+								"SSEAlgorithm": "AES256"
+							}
+						}
+					]
+				},
+
+				"LifecycleConfiguration" : {
+					"Rules": [
+						{
+							"Id": "standard to STANDARD_IA",
+							"Status": "Enabled",
+							"Transitions": [
+								{
+									"StorageClass" : "STANDARD_IA",
+									"TransitionInDays" : 30
+								}
+							]
+						}
+					]
+				}
+
+			}
+		},
+
+		"myDBSubnetGroup": {
+			"Type": "AWS::RDS::DBSubnetGroup",
+			"Properties": {
+				"DBSubnetGroupDescription": "Subnet group for PostgreSQL",
+				"SubnetIds": [
+					{ "Ref" : "Subnet1" },
+					{ "Ref" : "Subnet2" }
+				]
+			}
+		},
+		"InstanceProfile" : {
+			"Type" : "AWS::IAM::InstanceProfile",
+			"DependsOn": "IAMRole",
+			"Properties" : {
+				"Path" : "/",
+				"Roles" : [{"Ref":"IAMRole"}]
+			}
+		},
+
+		
+		"RDSPostgres": {
+			"Type": "AWS::RDS::DBInstance",
+			"DependsOn": "myDBSubnetGroup",
+			"Properties": {
+				"DBName": "csye6225",
+				"PubliclyAccessible": false,
+				"VPCSecurityGroups":[{"Ref": "DBSecurityGroup"}],
+				"DBInstanceClass": "db.t3.micro",
+				"MasterUsername": "postgres",
+				"MasterUserPassword": "postgres",
+				"DBInstanceIdentifier": "csye6225-spring2020",
+				"MultiAZ": false,
+				"AllocatedStorage": {"Ref":"RDSInstanceSize"},
+				"DBSubnetGroupName": { "Ref" : "myDBSubnetGroup" },
+				"Engine": "postgres"
+			}
+		},
+
+		
+
+		"EC2Instance": {
+			"Type": "AWS::EC2::Instance",
+			"DependsOn":"RDSPostgres",
+			"Properties": {
+				"ImageId": {"Ref":"AMIName"},
+				"InstanceType":"t2.micro",
+				"DisableApiTermination": false,
+				"KeyName": "ec2demo",
+				"IamInstanceProfile": {"Ref":"InstanceProfile"},
+				"BlockDeviceMappings" : [
+					{
+						"DeviceName" : "/dev/sda1",
+						"Ebs" : { "VolumeSize" : {"Ref":"InstanceSize"} }
+					}
+				],
+				"NetworkInterfaces": [
+					{
+						"SubnetId": {"Ref": "Subnet3"},
+						"AssociatePublicIpAddress": "true",
+						"DeviceIndex": "0",
+						"GroupSet": [{ "Ref" : "WebSecurityGroup" }]
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"",
+							[
+								"#!/bin/bash -xe\n",
+								"echo spring.datasource.url=jdbc:postgresql://",
+								{
+									"Fn::GetAtt": ["RDSPostgres","Endpoint.Address"]
+								},
+								":5432/postgres >> /home/ubuntu/application.properties\n",
+								"echo spring.datasource.username=",
+								{
+									"Ref": "DBUsername"
+								},
+								" >> /home/ubuntu/application.properties\n",
+								"echo spring.datasource.password=",
+								{
+									"Ref": "DBPassword"
+								},
+								" >> /home/ubuntu/application.properties\n",
+								"echo spring.jpa.generate-ddl=true >> /home/ubuntu/application.properties\n",
+								"echo spring.security.enabled=false >> /home/ubuntu/application.properties\n",
+								"echo management.security.enabled=false >> /home/ubuntu/application.properties\n",
+								"echo amazonProperties.endpointUrl=",
+								{
+									"Fn::GetAtt": ["S3Bucket","WebsiteURL"]
+								},
+								" >> /home/ubuntu/S3Bucket.properties\n",
+								"echo amazonProperties.bucketName=",
+								{
+									"Ref": "S3Bucket"
+								},
+								" >> /home/ubuntu/S3Bucket.properties\n",
+								"echo amazonProperties.region=",
+								{
+									"Ref": "AWSRegion"
+								},
+								" >> /home/ubuntu/S3Bucket.properties\n"
+							]
+						]
+					}
+				}
+			}
+		}
+
+
+
+
+
+	}
+
+}
