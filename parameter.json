@@ -33,7 +33,7 @@
   },
   {
     "ParameterKey": "AMIName",
-    "ParameterValue": "ami-03c4fd953388edf66"
+    "ParameterValue": "ami-0a436024609eb1c6f"
   },
   {
     "ParameterKey": "InstanceSize",
