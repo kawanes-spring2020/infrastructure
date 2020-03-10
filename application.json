@@ -295,9 +295,27 @@
 										"s3:PutObject",
 										"s3:ListBucket",
 										"s3:GetObject",
-										"s3:CreateBucket"
+										"s3:CreateBucket",
+										"s3:DeleteObject"
 									],
 									"Resource": {"Fn::Join":["",["arn:aws:s3:::",{"Ref":"S3Bucket"},"/*"]]}
+								}
+							]
+						}
+
+					},
+					{
+						"PolicyName" : "CodeDeploy-EC2-S3",
+						"PolicyDocument" : {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"s3:ListBucket",
+										"s3:GetObject"
+									],
+									"Resource": ["arn:aws:s3:::codedeploy.shubhamkawane.me"]
 								}
 							]
 						}
@@ -306,6 +324,8 @@
 				]
 			}
 		},
+
+
 
 		"S3Bucket": {
 			"Type" : "AWS::S3::Bucket",
@@ -383,6 +403,7 @@
 			"DependsOn":"RDSPostgres",
 			"Properties": {
 				"ImageId": {"Ref":"AMIName"},
+				"Tags" : [ {"Key" : "Name", "Value" : "BillApplicationEC2"} ],
 				"InstanceType":"t2.micro",
 				"DisableApiTermination": false,
 				"KeyName": "ec2demo",
