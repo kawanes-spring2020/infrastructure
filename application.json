@@ -312,10 +312,10 @@
 								{
 									"Effect": "Allow",
 									"Action": [
-										"s3:ListBucket",
-										"s3:GetObject"
+										"s3:List*",
+										"s3:Get*"
 									],
-									"Resource": ["arn:aws:s3:::codedeploy.shubhamkawane.me"]
+									"Resource": ["arn:aws:s3:::codedeploy.shubhamkawane.me/*"]
 								}
 							]
 						}
