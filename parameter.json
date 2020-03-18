@@ -33,7 +33,7 @@
   },
   {
     "ParameterKey": "AMIName",
-    "ParameterValue": "ami-0fcb63ef6c4e81704"
+    "ParameterValue": "ami-0303d7a58e182058c"
   },
   {
     "ParameterKey": "InstanceSize",
@@ -54,6 +54,9 @@
   {
     "ParameterKey": "accountid",
     "ParameterValue": "189788503720"
+  },
+  {
+    "ParameterKey": "logfile",
+    "ParameterValue": "/var/log/csye6225.log"
   }
-  
 ]
