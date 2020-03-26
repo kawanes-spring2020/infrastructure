@@ -211,6 +211,28 @@
 				"RouteTableId" : { "Ref" : "RouteTable" }
 			}
 		},
+
+		"InstanceSecurityGroup" : {
+			"Type" : "AWS::EC2::SecurityGroup",
+			"Properties" : {
+				"GroupDescription" : "Enable SSH access and HTTP from the load balancer only",
+				"SecurityGroupIngress" : [
+					{
+						"IpProtocol" : "tcp",
+						"FromPort" : "80",
+						"ToPort" : "80",
+						"SourceSecurityGroupId" : {"Fn::Select" : [0, {"Fn::GetAtt" : ["ApplicationLoadBalancer", "SecurityGroups"]}]}
+					},
+					{
+						"IpProtocol" : "tcp",
+						"FromPort" : "8080",
+						"ToPort" : "8080",
+						"SourceSecurityGroupId" : {"Fn::Select" : [0, {"Fn::GetAtt" : ["ApplicationLoadBalancer", "SecurityGroups"]}]}
+					} ],
+				"VpcId" : { "Ref" : "VPC" }
+			}
+		},
+
 		"WebSecurityGroup": {
 			"Type": "AWS::EC2::SecurityGroup",
 			"Properties": {
@@ -260,7 +282,7 @@
 				"ToPort": 5432,
 				"SourceSecurityGroupId": {
 					"Fn::GetAtt": [
-						"WebSecurityGroup",
+						"InstanceSecurityGroup",
 						"GroupId"
 					]
 				},
@@ -639,11 +661,11 @@
 						"Ref":"asglaunchconfig"
 					},
 					"TargetGroupARNs" : [ { "Ref" : "ALBTargetGroup" } ],
-					"MinSize":"1",
-					"MaxSize":"3",
+					"MinSize":"2",
+					"MaxSize":"5",
 					"Tags" : [ {"Key" : "Name", "Value" : "BillApplicationEC2", "PropagateAtLaunch":"true"} ],
 					"Cooldown" : "60",
-					"DesiredCapacity" : "1",
+					"DesiredCapacity" : "2",
 					"VPCZoneIdentifier" : [{"Ref": "Subnet1"},{"Ref": "Subnet2"},{"Ref": "Subnet3"}]
 				}
 			},
@@ -666,7 +688,7 @@
 					],
 					"SecurityGroups":[
 						{ 
-							"Ref" : "WebSecurityGroup" 
+							"Ref" : "InstanceSecurityGroup" 
 						}
 					],
 					"UserData": {
@@ -804,6 +826,8 @@
 					"ComparisonOperator": "LessThanThreshold"
 				}
 			},
+
+			
 
 			"myDNSRecord" : {
 				"Type" : "AWS::Route53::RecordSet",
