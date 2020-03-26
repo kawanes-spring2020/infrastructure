@@ -136,7 +136,7 @@
 				"VpcId" : { "Ref" : "VPC" },
 				"CidrBlock" : { "Ref" : "PublicSubnet1CIDR" },
 				"AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
-				"MapPublicIpOnLaunch" : "true",	
+				"MapPublicIpOnLaunch" : "true", 
 				"Tags" : [ { "Key" : "Name", "Value" : "AZ-1" } ]
 			}
 		},
@@ -148,7 +148,7 @@
 				"VpcId" : { "Ref" : "VPC" },
 				"CidrBlock" : { "Ref" : "PublicSubnet2CIDR" },
 				"AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
-				"MapPublicIpOnLaunch" : "true",	
+				"MapPublicIpOnLaunch" : "true", 
 				"Tags" : [ { "Key" : "Name", "Value" : "AZ-2" } ]
 			}
 		},
@@ -160,7 +160,7 @@
 				"VpcId" : { "Ref" : "VPC" },
 				"CidrBlock" : { "Ref" : "PublicSubnet3CIDR" },
 				"AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
-				"MapPublicIpOnLaunch" : "true",	
+				"MapPublicIpOnLaunch" : "true", 
 				"Tags" : [ { "Key" : "Name", "Value" : "Az-3" } ]
 			}
 		},
@@ -249,7 +249,7 @@
 			"Properties": {
 				"VpcId" : { "Ref" : "VPC" },
 				"GroupDescription": "Database Server Security Group"
-				
+
 			}
 		},
 		"InboundRule": {
@@ -390,7 +390,7 @@
 			}
 		},
 
-		
+
 		"RDSPostgres": {
 			"Type": "AWS::RDS::DBInstance",
 			"DependsOn": "myDBSubnetGroup",
@@ -481,7 +481,7 @@
 				"Users" : ["circleci"]
 			} },
 
-			
+
 
 			"CircleCICodeDeploy" : {
 				"Type": "AWS::IAM::ManagedPolicy",
@@ -580,6 +580,10 @@
 						"DeploymentType" : "IN_PLACE"
 
 					},
+					"AutoScalingGroups":[{"Ref": "myASG"}],
+					"LoadBalancerInfo":{
+						"TargetGroupInfoList": [{ "Name": { "Fn::GetAtt" : [ "ALBTargetGroup",  "TargetGroupName" ] } }]
+					},
 
 					"DeploymentConfigName" : "CodeDeployDefault.AllAtOnce",
 					"AutoRollbackConfiguration" : { "Enabled" : true, "Events" : [ "DEPLOYMENT_FAILURE" ]},
@@ -594,29 +598,75 @@
 
 			},
 
+			"ApplicationLoadBalancer" : {
+				"Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+				"Properties" : {
+					"Subnets" : [{"Ref": "Subnet1"},{"Ref": "Subnet2"},{"Ref": "Subnet3"}],
+					"SecurityGroups" : [{"Ref" : "WebSecurityGroup"}] 
+				}
+			},
 
-			"EC2Instance": {
-				"Type": "AWS::EC2::Instance",
+			"ALBListener" : {
+				"Type" : "AWS::ElasticLoadBalancingV2::Listener",
+				"Properties" : {
+					"DefaultActions" : [{
+						"Type" : "forward",
+						"TargetGroupArn" : { "Ref" : "ALBTargetGroup" }
+					}],
+					"LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
+					"Port" : "80",
+					"Protocol" : "HTTP"
+				}
+			},
+
+			"ALBTargetGroup" : {
+				"Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+				"Properties" : {
+					"HealthCheckIntervalSeconds" : 30,
+					"HealthCheckTimeoutSeconds" : 5,
+					"HealthyThresholdCount" : 3,
+					"Port" : 8080,
+					"Protocol" : "HTTP",
+					"UnhealthyThresholdCount" : 5,
+					"VpcId" : {"Ref" : "VPC"}
+				}
+			},
+
+			"myASG":{
+				"Type":"AWS::AutoScaling::AutoScalingGroup",
+				"Properties":{
+					"LaunchConfigurationName":{
+						"Ref":"asglaunchconfig"
+					},
+					"TargetGroupARNs" : [ { "Ref" : "ALBTargetGroup" } ],
+					"MinSize":"1",
+					"MaxSize":"3",
+					"Tags" : [ {"Key" : "Name", "Value" : "BillApplicationEC2", "PropagateAtLaunch":"true"} ],
+					"Cooldown" : "60",
+					"DesiredCapacity" : "1",
+					"VPCZoneIdentifier" : [{"Ref": "Subnet1"},{"Ref": "Subnet2"},{"Ref": "Subnet3"}]
+				}
+			},
+
+
+			"asglaunchconfig": {
+				"Type": "AWS::AutoScaling::LaunchConfiguration",
 				"DependsOn":"RDSPostgres",
 				"Properties": {
 					"ImageId": {"Ref":"AMIName"},
-					"Tags" : [ {"Key" : "Name", "Value" : "BillApplicationEC2"} ],
 					"InstanceType":"t2.micro",
-					"DisableApiTermination": false,
 					"KeyName": "ec2prod",
 					"IamInstanceProfile": {"Ref":"InstanceProfile"},
+					"AssociatePublicIpAddress": "true",
 					"BlockDeviceMappings" : [
 						{
 							"DeviceName" : "/dev/sda1",
 							"Ebs" : { "VolumeSize" : {"Ref":"InstanceSize"} }
 						}
 					],
-					"NetworkInterfaces": [
-						{
-							"SubnetId": {"Ref": "Subnet3"},
-							"AssociatePublicIpAddress": "true",
-							"DeviceIndex": "0",
-							"GroupSet": [{ "Ref" : "WebSecurityGroup" }]
+					"SecurityGroups":[
+						{ 
+							"Ref" : "WebSecurityGroup" 
 						}
 					],
 					"UserData": {
@@ -678,12 +728,108 @@
 						}
 					}
 				}
+			},
+
+			"WebServerScaleUpPolicy": {
+				"Type": "AWS::AutoScaling::ScalingPolicy",
+				"Properties": {
+					"AdjustmentType": "ChangeInCapacity",
+					"AutoScalingGroupName": {
+						"Ref": "myASG"
+					},
+					"Cooldown": "60",
+					"ScalingAdjustment": "1"
+				}
+			},
+			"WebServerScaleDownPolicy": {
+				"Type": "AWS::AutoScaling::ScalingPolicy",
+				"Properties": {
+					"AdjustmentType": "ChangeInCapacity",
+					"AutoScalingGroupName": {
+						"Ref": "myASG"
+					},
+					"Cooldown": "60",
+					"ScalingAdjustment": "-1"
+				}
+			},
+			"CPUAlarmHigh": {
+				"Type": "AWS::CloudWatch::Alarm",
+				"Properties": {
+					"AlarmDescription": "Scale-up if CPU > 5% for 10 minutes",
+					"MetricName": "CPUUtilization",
+					"Namespace": "AWS/EC2",
+					"Statistic": "Average",
+					"Period": "300",
+					"EvaluationPeriods": "2",
+					"Threshold": "5",
+					"AlarmActions": [
+						{
+							"Ref": "WebServerScaleUpPolicy"
+						}
+					],
+					"Dimensions": [
+						{
+							"Name": "AutoScalingGroupName",
+							"Value": {
+								"Ref": "myASG"
+							}
+						}
+					],
+					"ComparisonOperator": "GreaterThanThreshold"
+				}
+			},
+			"CPUAlarmLow": {
+				"Type": "AWS::CloudWatch::Alarm",
+				"Properties": {
+					"AlarmDescription": "Scale-down if CPU < 3% for 10 minutes",
+					"MetricName": "CPUUtilization",
+					"Namespace": "AWS/EC2",
+					"Statistic": "Average",
+					"Period": "300",
+					"EvaluationPeriods": "2",
+					"Threshold": "3",
+					"AlarmActions": [
+						{
+							"Ref": "WebServerScaleDownPolicy"
+						}
+					],
+					"Dimensions": [
+						{
+							"Name": "AutoScalingGroupName",
+							"Value": {
+								"Ref": "myASG"
+							}
+						}
+					],
+					"ComparisonOperator": "LessThanThreshold"
+				}
+			},
+
+			"myDNSRecord" : {
+				"Type" : "AWS::Route53::RecordSet",
+				"Properties" : 
+				{
+					"HostedZoneId" : "Z17L5ECH28FVK9",
+					"Name" : "prod.shubhamkawane.me.",
+					"Type" : "A",
+					"AliasTarget" : {
+						"HostedZoneId" : { "Fn::GetAtt" : ["ApplicationLoadBalancer", "CanonicalHostedZoneID"] },
+						"DNSName" : { "Fn::GetAtt" : ["ApplicationLoadBalancer","DNSName"] }
+					}
+				}
 			}
 
 
 
 
 
+		},
+
+		"Outputs" : {
+			"URL" : {
+				"Description" : "The URL of the website",
+				"Value" :  { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : [ "ApplicationLoadBalancer", "DNSName" ]}]]}
+			}
 		}
 
 	}
