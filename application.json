@@ -356,7 +356,12 @@
 					}
 
 				],
-				"ManagedPolicyArns": ["arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"]
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+					"arn:aws:iam::aws:policy/AmazonSQSFullAccess",
+					"arn:aws:iam::aws:policy/AmazonSNSFullAccess",
+					"arn:aws:iam::aws:policy/AWSLambdaFullAccess"
+				]
 			}
 		},
 
@@ -504,6 +509,23 @@
 			} },
 
 
+			"CircleCiLambda":{
+				"Type": "AWS::IAM::ManagedPolicy",
+				"Properties": {
+					"ManagedPolicyName": "CircleCiLambda",
+					"Description" : "Policy to allow CircleCI to call Code Update on lambda",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+							"Effect": "Allow",
+							"Action": "lambda:UpdateFunctionCode",
+							"Resource" : { "Fn::Join": [ "", ["arn:aws:lambda:", {"Ref": "AWSRegion"}, ":", {"Ref": "accountid"}, ":function:testFunction"]]}
+						}
+					]
+					},
+					"Users" : ["circleci"]
+				}
+			},
 
 			"CircleCICodeDeploy" : {
 				"Type": "AWS::IAM::ManagedPolicy",
@@ -867,7 +889,7 @@
 			"AWSLambda": {
 				"Type": "AWS::Lambda::Function",
 				"Properties": {
-					"Handler": "com.lamda.sns.App.handlerRequest",
+					"Handler": "com.lamda.sns.App::handleRequest",
 					"FunctionName": "testFunction",
 					"Role": {
 						"Fn::GetAtt": [
@@ -876,10 +898,13 @@
 						]
 					},
 					"Code": {
+						
 						"S3Bucket": "codedeploy.shubhamkawane.me",
 						"S3Key": "sns-0.0.1-SNAPSHOT.jar"
 					},
-					"Runtime": "java8"
+					"Runtime": "java8",
+					"MemorySize": 512,
+					"Timeout": 15
 				}
 			},
 

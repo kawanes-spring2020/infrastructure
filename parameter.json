@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "AWSRegion",
-    "ParameterValue": "us-east-2"
+    "ParameterValue": "us-east-1"
   },
   {
     "ParameterKey": "DBUsername",
@@ -33,7 +33,7 @@
   },
   {
     "ParameterKey": "AMIName",
-    "ParameterValue": "ami-093fbbd8d42827be5"
+    "ParameterValue": "ami-059e61d11c9258396"
   },
   {
     "ParameterKey": "InstanceSize",
