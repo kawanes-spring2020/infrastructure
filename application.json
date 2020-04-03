@@ -908,6 +908,23 @@
 				}
 			},
 
+			"LambdaInvocation": {
+				"Type": "AWS::Lambda::Permission",
+				"Properties": {
+					"FunctionName": {
+						"Fn::GetAtt": [
+							"AWSLambda",
+							"Arn"
+						]
+					},
+					"Action": "lambda:InvokeFunction",
+					"Principal": "sns.amazonaws.com",
+					"SourceArn": {
+						"Ref": "MySNSTopic"	
+					}
+				}
+			},
+
 			"LambdaExecutionRole": {
 				"Type": "AWS::IAM::Role",
 				"Properties": {
