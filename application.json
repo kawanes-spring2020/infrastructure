@@ -348,7 +348,7 @@
 										"s3:List*",
 										"s3:Get*"
 									],
-									"Resource": ["arn:aws:s3:::codedeploy1.shubhamkawane.me/*"]
+									"Resource": ["arn:aws:s3:::codedeploy.shubhamkawane.me/*"]
 								}
 							]
 						}
@@ -442,7 +442,7 @@
 						{
 							"Effect": "Allow",
 							"Action": ["s3:PutObject", "s3:Get*", "s3:List*"],
-							"Resource": "arn:aws:s3:::codedeploy1.shubhamkawane.me/*"
+							"Resource": "arn:aws:s3:::codedeploy.shubhamkawane.me/*"
 						}
 					]
 				},
@@ -744,6 +744,16 @@
 									{
 										"Ref": "secret"
 									},
+									" >> /home/ubuntu/S3Bucket.properties\n",
+									"echo sqs.url=",
+									{
+										"Ref": "AmazonSQS"
+									},
+									" >> /home/ubuntu/S3Bucket.properties\n",
+									"echo sns.arn=",
+									{
+										"Ref": "MySNSTopic"
+									},
 									" >> /home/ubuntu/S3Bucket.properties\n"
 								]
 							]
@@ -841,9 +851,96 @@
 						"DNSName" : { "Fn::GetAtt" : ["ApplicationLoadBalancer","DNSName"] }
 					}
 				}
+			},
+
+			"MySNSTopic" : {
+				"Type" : "AWS::SNS::Topic",
+				"Properties" : {
+					"Subscription" : [{
+						"Endpoint" : { "Fn::GetAtt" : [ "AWSLambda", "Arn" ] },
+						"Protocol" : "lambda"
+					}],
+					"TopicName" : "SNS-Lambda-Invocation"
+				}
+			},
+
+			"AWSLambda": {
+				"Type": "AWS::Lambda::Function",
+				"Properties": {
+					"Handler": "com.lamda.sns.App.handlerRequest",
+					"FunctionName": "testFunction",
+					"Role": {
+						"Fn::GetAtt": [
+							"LambdaExecutionRole",
+							"Arn"
+						]
+					},
+					"Code": {
+						"S3Bucket": "codedeploy.shubhamkawane.me",
+						"S3Key": "sns-0.0.1-SNAPSHOT.jar"
+					},
+					"Runtime": "java8"
+				}
+			},
+
+			"LambdaExecutionRole": {
+				"Type": "AWS::IAM::Role",
+				"Properties": {
+					"AssumeRolePolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [
+							{
+								"Effect": "Allow",
+								"Principal": {
+									"Service": [
+										"lambda.amazonaws.com"
+									]
+								},
+								"Action": [
+									"sts:AssumeRole"
+								]
+							}
+						]
+					},
+					"RoleName": "Lambda-Role-Cloudformation",
+					"ManagedPolicyArns": [
+						"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+						"arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+						"arn:aws:iam::aws:policy/AmazonSESFullAccess"
+					]
+				}
+			},
+
+			"AmazonSQS": {
+				"Type" : "AWS::SQS::Queue",
+				"Properties" : {
+					"QueueName" : "testqueue"
+				}
+			},
+
+			"DynamoDB":{
+				"Type" : "AWS::DynamoDB::Table",
+				"Properties" : {
+					"KeySchema" : [
+						{
+							"AttributeName" : "username",
+							"KeyType" : "HASH"
+						}],
+					"TableName" : "test",
+					"TimeToLiveSpecification" : {
+						"AttributeName" : "ttl",
+						"Enabled" : true
+					}, "ProvisionedThroughput" : {
+						"ReadCapacityUnits" : "5",
+						"WriteCapacityUnits" : "5"
+					},
+					"AttributeDefinitions" : [
+						{
+							"AttributeName" : "username",
+							"AttributeType" : "S"   
+						}]
+				}
 			}
-
-
 
 
 
