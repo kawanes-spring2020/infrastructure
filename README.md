@@ -13,4 +13,7 @@ aws cloudformation create-stack --stack-name VPCStack1 --template-body file://cl
 
 aws cloudformation delete-stack --stack-name VPCStack1 --region us-east-1 --profile awsdev
 
+# Importing ssl certificate into ACM
+aws acm import-certificate --certificate file://mycert.pem --certificate-chain file://prod_shubhamkawane_me.ca-bundle --private-key file://server.private.pem --profile awsprod
+
 
