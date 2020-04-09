@@ -432,8 +432,21 @@
 				"MultiAZ": false,
 				"AllocatedStorage": {"Ref":"RDSInstanceSize"},
 				"DBSubnetGroupName": { "Ref" : "myDBSubnetGroup" },
-				"Engine": "postgres"
+				"Engine": "postgres",
+				"StorageEncrypted": true,
+				"DBParameterGroupName": {"Ref" : "RDSGroup"}
 			}
+		},
+
+		"RDSGroup":{
+			"Type": "AWS::RDS::DBParameterGroup",
+			"Properties": {
+				"Description": "RDS Parameter Group",
+				"Family": "postgres11",
+				"Parameters": {
+					"rds.force_ssl": 1
+				}
+			} 
 		},
 
 		"CircleCIUploadToS3" : {
@@ -650,8 +663,6 @@
 				}
 			},
 
-			
-
 			"ALBListenerHTTPS" : {
 				"Type" : "AWS::ElasticLoadBalancingV2::Listener",
 				"Properties" : {
@@ -659,11 +670,16 @@
 						"Type" : "forward",
 						"TargetGroupArn" : { "Ref" : "ALBTargetGroup" }
 					}],
+					"Certificates" : [ {
+						"CertificateArn" : "arn:aws:acm:us-east-1:189788503720:certificate/82c21358-66e6-4918-8ddb-66019b77df9b"
+					}],
 					"LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
-					"Port" : "80",
-					"Protocol" : "HTTP"
+					"Port" : "443",
+					"Protocol" : "HTTPS"
 				}
 			},
+
+			
 
 			
 
