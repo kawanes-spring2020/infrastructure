@@ -444,7 +444,8 @@
 				"Description": "RDS Parameter Group",
 				"Family": "postgres11",
 				"Parameters": {
-					"rds.force_ssl": 1
+					"rds.force_ssl": 1,
+					"log_connections":1
 				}
 			} 
 		},
